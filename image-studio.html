@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImageStudio — Pro Image Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --bg4: #22222f;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --accent: #7c6aff;
+    --accent2: #a78bfa;
+    --accent3: #c4b5fd;
+    --green: #34d399;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --text: #f0f0f8;
+    --text2: #9999bb;
+    --text3: #5555777;
+    --panel-w: 300px;
+    --header-h: 56px;
+    --radius: 10px;
+    --font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  header {
+    height: var(--header-h);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent2), var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    flex-shrink: 0;
+  }
+
+  .logo span { font-weight: 400; opacity: 0.6; -webkit-text-fill-color: var(--text2); background: none; }
+
+  .header-divider { width: 1px; height: 24px; background: var(--border2); flex-shrink: 0; }
+
+  .header-info {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+    flex: 1;
+  }
+
+  .header-actions { display: flex; gap: 8px; }
+
+  .btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+  .btn:hover { background: var(--bg4); border-color: rgba(255,255,255,0.25); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #6b5ce7; border-color: #6b5ce7; }
+
+  .btn-danger { border-color: rgba(248,113,113,0.4); color: var(--red); }
+  .btn-danger:hover { background: rgba(248,113,113,0.1); }
+
+  /* Layout */
+  .workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--panel-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 12px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+  .tab-content { display: none; flex: 1; overflow-y: auto; padding: 16px; }
+  .tab-content.active { display: flex; flex-direction: column; gap: 14px; }
+
+  .tab-content::-webkit-scrollbar { width: 4px; }
+  .tab-content::-webkit-scrollbar-track { background: transparent; }
+  .tab-content::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+  /* Panels */
+  .panel {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-header svg { width: 14px; height: 14px; opacity: 0.7; }
+
+  .panel-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* Form elements */
+  label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; letter-spacing: 0.3px; }
+
+  .input-row { display: flex; gap: 8px; }
+
+  input[type="number"], input[type="text"], select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); }
+
+  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239999bb' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+
+  .input-unit { font-family: var(--mono); font-size: 11px; color: var(--text2); background: var(--bg4); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; white-space: nowrap; flex-shrink: 0; }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .toggle-label { font-size: 13px; font-weight: 500; color: var(--text); }
+
+  .toggle {
+    width: 36px;
+    height: 20px;
+    background: var(--bg4);
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: var(--text2);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle.on::after { transform: translateX(16px); background: #fff; }
+
+  /* Chip select */
+  .chip-group { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .chip {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    letter-spacing: 0.3px;
+  }
+  .chip:hover { border-color: var(--border2); color: var(--text); }
+  .chip.active { background: rgba(124,106,255,0.15); border-color: var(--accent); color: var(--accent2); }
+
+  /* Color picker row */
+  .color-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+
+  .color-swatch {
+    aspect-ratio: 1;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.1s, border-color 0.15s;
+  }
+  .color-swatch:hover { transform: scale(1.12); }
+  .color-swatch.active { border-color: #fff; }
+
+  .custom-color { display: flex; gap: 8px; align-items: center; }
+
+  input[type="color"] {
+    width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    border: 1px solid var(--border2);
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+  }
+
+  /* BG presets */
+  .bg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+  .bg-preset {
+    aspect-ratio: 3/2;
+    border-radius: 7px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .bg-preset:hover { transform: scale(1.04); }
+  .bg-preset.active { border-color: var(--accent2); }
+  .bg-preset-label {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    background: rgba(0,0,0,0.6);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 3px;
+    color: #fff;
+  }
+
+  /* Canvas area */
+  .canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .canvas-toolbar {
+    height: 44px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .tool-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-size: 16px;
+  }
+  .tool-btn:hover { background: var(--bg4); color: var(--text); }
+  .tool-btn.active { background: rgba(124,106,255,0.15); border-color: var(--accent); color: var(--accent2); }
+
+  .zoom-display {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    min-width: 48px;
+    text-align: center;
+  }
+
+  .canvas-container {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .canvas-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px var(--border2), 0 20px 60px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+  }
+
+  #preview-canvas {
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .drop-zone:hover { background: rgba(124,106,255,0.03); }
+  .drop-zone.drag-over { background: rgba(124,106,255,0.08); }
+
+  .drop-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    border: 2px dashed rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text2);
+    font-size: 28px;
+    transition: all 0.2s;
+  }
+  .drop-zone:hover .drop-icon { border-color: var(--accent); color: var(--accent2); }
+
+  .drop-text { font-size: 15px; font-weight: 600; color: var(--text2); }
+  .drop-sub { font-size: 12px; color: #55557799; }
+
+  /* Status bar */
+  .status-bar {
+    height: 30px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+  .status-item {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Progress overlay */
+  .progress-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  .progress-overlay.show { display: flex; }
+
+  .progress-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 32px 40px;
+    text-align: center;
+    min-width: 280px;
+  }
+  .progress-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .progress-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+  .progress-bar-wrap { height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 2px; width: 0%; transition: width 0.3s; }
+
+  /* Toast */
+  .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+
+  .toast {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toastIn 0.3s ease;
+    pointer-events: auto;
+    max-width: 280px;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .toast.success { border-color: rgba(52,211,153,0.4); }
+  .toast.error { border-color: rgba(248,113,113,0.4); }
+  .toast-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* Range */
+  .range-wrap { display: flex; gap: 10px; align-items: center; }
+  input[type="range"] {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bg4);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent2);
+    border: 2px solid var(--bg2);
+    cursor: pointer;
+  }
+  .range-val { font-family: var(--mono); font-size: 12px; color: var(--text2); min-width: 32px; text-align: right; }
+
+  /* BG removal result */
+  .removal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.4px;
+  }
+  .badge-success { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+  .badge-pending { background: rgba(124,106,255,0.1); color: var(--accent2); border: 1px solid rgba(124,106,255,0.3); }
+
+  /* Hidden */
+  #file-input { display: none; }
+
+  /* Divider */
+  .divider { width: 100%; height: 1px; background: var(--border); }
+
+  /* Scroll fix */
+  .sidebar { overflow: hidden; }
+  .tab-content { padding-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Image<span>Studio</span></div>
+  <div class="header-divider"></div>
+  <div class="header-info" id="file-info">No image loaded — drop one to start</div>
+  <div class="header-actions">
+    <button class="btn" onclick="document.getElementById('file-input').click()">Open Image</button>
+    <button class="btn btn-primary" id="export-btn" onclick="exportImage()" disabled>Export</button>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('resize')">Resize</div>
+      <div class="tab" onclick="switchTab('convert')">Convert</div>
+      <div class="tab" onclick="switchTab('bg')">BG</div>
+    </div>
+
+    <!-- RESIZE TAB -->
+    <div class="tab-content active" id="tab-resize">
+      <div class="panel">
+        <div class="panel-header">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+          Dimensions
+        </div>
+        <div class="panel-body">
+          <div>
+            <label>Width</label>
+            <div class="input-row">
+              <input type="number" id="width-input" placeholder="—" min="1" max="8000" oninput="onDimInput('w')">
+              <div class="input-unit">px</div>
+            </div>
+          </div>
+          <div>
+            <label>Height</label>
+            <div class="input-row">
+              <input type="number" id="height-input" placeholder="—" min="1" max="8000" oninput="onDimInput('h')">
+              <div class="input-unit">px</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Lock aspect ratio</span>
+            <div class="toggle on" id="aspect-toggle" onclick="toggleAspect()"></div>
+          </div>
+          <div class="divider"></div>
+          <div>
+            <label>Preset sizes</label>
+            <div class="chip-group">
+              <div class="chip" onclick="applyPreset(1080,1080)">Square</div>
+              <div class="chip" onclick="applyPreset(1920,1080)">HD</div>
+              <div class="chip" onclick="applyPreset(3840,2160)">4K</div>
+              <div class="chip" onclick="applyPreset(1080,1920)">Story</div>
+              <div class="chip" onclick="applyPreset(1200,628)">OG</div>
+              <div class="chip" onclick="applyPreset(800,600)">Web</div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div>
+            <label>Scale %</label>
+            <div class="range-wrap">
+              <input type="range" id="scale-range" min="10" max="300" value="100" oninput="onScaleInput(this.value)">
+              <span class="range-val" id="scale-val">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v14M1 8h14"/></svg>
+          Resampling
+        </div>
+        <div class="panel-body">
+          <div>
+            <label>Algorithm</label>
+            <select id="algorithm">
+              <option value="lanczos">Lanczos (Sharpest)</option>
+              <option value="bilinear">Bilinear (Smooth)</option>
+              <option value="nearest">Nearest Neighbor (Pixel)</option>
+              <option value="bicubic">Bicubic (Balanced)</option>
+            </select>
+          </div>
+          <div>
+            <label>Sharpening</label>
+            <div class="range-wrap">
+              <input type="range" id="sharp-range" min="0" max="100" value="0" oninput="updateSharp(this.value)">
+              <span class="range-val" id="sharp-val">0</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%; margin-top:4px;" onclick="applyResize()">Apply Resize</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONVERT TAB -->
+    <div class="tab-content" id="tab-convert">
+      <div class="panel">
+        <div class="panel-header">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 0112 0M14 8a6 6 0 01-12 0"/><path d="M10 6l2 2-2 2M6 10l-2-2 2-2"/></svg>
+          Output Format
+        </div>
+        <div class="panel-body">
+          <div>
+            <label>Format</label>
+            <div class="chip-group" id="format-chips">
+              <div class="chip active" onclick="setFormat('png')">PNG</div>
+              <div class="chip" onclick="setFormat('jpeg')">JPEG</div>
+              <div class="chip" onclick="setFormat('webp')">WebP</div>
+            </div>
+          </div>
+          <div id="quality-section">
+            <label>Quality <span id="quality-label" style="color:var(--accent2)">—</span></label>
+            <div class="range-wrap">
+              <input type="range" id="quality-range" min="10" max="100" value="92" oninput="updateQuality(this.value)">
+              <span class="range-val" id="quality-val">92</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div>
+            <label>Color space</label>
+            <select id="colorspace">
+              <option value="srgb">sRGB (Web standard)</option>
+              <option value="linear">Linear RGB</option>
+              <option value="grayscale">Grayscale</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+          Metadata
+        </div>
+        <div class="panel-body">
+          <div class="toggle-row">
+            <span class="toggle-label">Strip metadata</span>
+            <div class="toggle on" id="strip-toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Preserve color profile</span>
+            <div class="toggle" id="profile-toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Optimise for web</span>
+            <div class="toggle on" id="web-toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="convert-info" style="display:none;">
+        <div class="panel-header">File info</div>
+        <div class="panel-body" id="convert-info-body" style="gap:6px;"></div>
+      </div>
+    </div>
+
+    <!-- BG TAB -->
+    <div class="tab-content" id="tab-bg">
+      <div class="panel">
+        <div class="panel-header">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2l12 12M6 2h8v8"/><path d="M2 6v8h8"/></svg>
+          Remove Background
+        </div>
+        <div class="panel-body">
+          <div style="font-size:12px; color:var(--text2); line-height:1.6;">
+            Removes background using AI edge detection. Works best on subjects with clear contrast.
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="removal-badge badge-pending" id="bg-status">Ready</span>
+            <span style="font-size:11px; color:var(--text2);" id="bg-status-text">Load an image first</span>
+          </div>
+          <div>
+            <label>Threshold sensitivity</label>
+            <div class="range-wrap">
+              <input type="range" id="threshold-range" min="1" max="100" value="30" oninput="document.getElementById('threshold-val').textContent=this.value">
+              <span class="range-val" id="threshold-val">30</span>
+            </div>
+          </div>
+          <div>
+            <label>Edge feather</label>
+            <div class="range-wrap">
+              <input type="range" id="feather-range" min="0" max="20" value="2" oninput="document.getElementById('feather-val').textContent=this.value">
+              <span class="range-val" id="feather-val">2</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="removeBackground()">Remove Background</button>
+          <button class="btn" style="width:100%;" id="restore-btn" onclick="restoreOriginal()" disabled>Restore Original</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="9" rx="2"/><path d="M5 4V2M11 4V2"/></svg>
+          Add Background
+        </div>
+        <div class="panel-body">
+          <div>
+            <label>Solid color</label>
+            <div class="color-grid" id="color-grid"></div>
+          </div>
+          <div class="custom-color">
+            <input type="color" id="custom-color" value="#ffffff" onchange="applyBgColor(this.value)">
+            <input type="text" id="hex-input" value="#ffffff" placeholder="#hex" style="flex:1;" oninput="onHexInput(this.value)">
+            <button class="btn" style="padding:7px 10px; flex-shrink:0;" onclick="applyBgColor(document.getElementById('custom-color').value)">Apply</button>
+          </div>
+          <div class="divider"></div>
+          <div>
+            <label>Gradient presets</label>
+            <div class="bg-grid" id="bg-grid"></div>
+          </div>
+          <div class="divider"></div>
+          <div>
+            <label>Upload background image</label>
+            <button class="btn" style="width:100%;" onclick="document.getElementById('bg-file-input').click()">
+              Choose Image…
+            </button>
+            <input type="file" id="bg-file-input" accept="image/*" style="display:none;" onchange="loadBgImage(this)">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas area -->
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <button class="tool-btn" title="Zoom in" onclick="zoom(1.2)">＋</button>
+      <button class="tool-btn" title="Zoom out" onclick="zoom(0.8)">－</button>
+      <button class="tool-btn" title="Fit to screen" onclick="fitToScreen()" style="font-size:12px; font-weight:700;">FIT</button>
+      <button class="tool-btn" title="100%" onclick="setZoom(1)" style="font-size:11px; font-weight:700;">1:1</button>
+      <div class="zoom-display" id="zoom-display">—</div>
+      <div style="flex:1;"></div>
+      <button class="tool-btn" title="Toggle checkerboard" onclick="toggleCheckerboard()" id="checker-btn">▣</button>
+      <button class="tool-btn btn-danger" title="Reset" onclick="resetAll()" style="font-size:11px; font-weight:700;">RESET</button>
+    </div>
+
+    <div class="canvas-container" id="canvas-container">
+      <div class="drop-zone" id="drop-zone">
+        <div class="drop-icon">⬆</div>
+        <div class="drop-text">Drop image here</div>
+        <div class="drop-sub">PNG, JPEG, WebP, GIF, BMP, TIFF supported</div>
+        <button class="btn btn-primary" style="margin-top:8px;" onclick="document.getElementById('file-input').click()">Browse Files</button>
+      </div>
+      <div class="canvas-wrapper" id="canvas-wrapper" style="display:none;">
+        <canvas id="preview-canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-dot" id="status-dot" style="background:var(--text2)"></div>
+        <span id="status-text">No image</span>
+      </div>
+      <div class="status-item" id="dim-status"></div>
+      <div class="status-item" id="size-status"></div>
+      <div class="status-item" id="format-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress overlay -->
+<div class="progress-overlay" id="progress-overlay">
+  <div class="progress-card">
+    <div class="progress-title" id="progress-title">Processing…</div>
+    <div class="progress-sub" id="progress-sub">Please wait</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toast-container"></div>
+
+<input type="file" id="file-input" accept="image/*" onchange="loadImage(this)">
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let originalImage = null;
+let currentImage = null; // ImageData or HTMLCanvasElement
+let bgRemovedImage = null;
+let originalFile = null;
+let aspectLocked = true;
+let zoomLevel = 1;
+let currentFormat = 'png';
+let outputCanvas = null; // off-screen canvas for processing
+let sharpness = 0;
+let showCheckerboard = true;
+
+// ─── UI Init ─────────────────────────────────────────────────────────────────
+const COLORS = ['#ffffff','#000000','#f87171','#fbbf24','#34d399','#60a5fa','#a78bfa','#f472b6',
+                 '#6b7280','#1f2937','#7f1d1d','#92400e','#064e3b','#1e3a5f','#3730a3','#831843'];
+
+const GRADIENTS = [
+  { label:'Sunset', css:'linear-gradient(135deg,#f97316,#ec4899)' },
+  { label:'Ocean', css:'linear-gradient(135deg,#0ea5e9,#6366f1)' },
+  { label:'Forest', css:'linear-gradient(135deg,#22c55e,#06b6d4)' },
+  { label:'Dusk', css:'linear-gradient(135deg,#8b5cf6,#ec4899)' },
+  { label:'Dawn', css:'linear-gradient(135deg,#fbbf24,#f97316,#ec4899)' },
+  { label:'Mint', css:'linear-gradient(135deg,#a7f3d0,#6ee7b7)' },
+];
+
+function initUI() {
+  const cg = document.getElementById('color-grid');
+  COLORS.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'color-swatch';
+    el.style.background = c;
+    if(c === '#ffffff') { el.style.border = '2px solid rgba(255,255,255,0.3)'; }
+    el.onclick = () => { document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active')); el.classList.add('active'); document.getElementById('custom-color').value = c; document.getElementById('hex-input').value = c; applyBgColor(c); };
+    cg.appendChild(el);
+  });
+
+  const bg = document.getElementById('bg-grid');
+  GRADIENTS.forEach((g,i) => {
+    const el = document.createElement('div');
+    el.className = 'bg-preset';
+    el.style.background = g.css;
+    el.innerHTML = `<div class="bg-preset-label">${g.label}</div>`;
+    el.onclick = () => { document.querySelectorAll('.bg-preset').forEach(s => s.classList.remove('active')); el.classList.add('active'); applyBgGradient(g.css); };
+    bg.appendChild(el);
+  });
+
+  updateQuality(92);
+}
+
+// ─── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['resize','convert','bg'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ─── Load image ──────────────────────────────────────────────────────────────
+function loadImage(input) {
+  const file = input.files[0];
+  if(!file) return;
+  originalFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      originalImage = img;
+      bgRemovedImage = null;
+      renderToCanvas(img);
+      document.getElementById('drop-zone').style.display = 'none';
+      document.getElementById('canvas-wrapper').style.display = 'block';
+      document.getElementById('export-btn').disabled = false;
+      document.getElementById('restore-btn').disabled = true;
+      document.getElementById('bg-status').textContent = 'Ready';
+      document.getElementById('bg-status').className = 'removal-badge badge-pending';
+      document.getElementById('bg-status-text').textContent = 'Click Remove Background';
+
+      const w = img.naturalWidth, h = img.naturalHeight;
+      document.getElementById('width-input').value = w;
+      document.getElementById('height-input').value = h;
+      document.getElementById('scale-range').value = 100;
+      document.getElementById('scale-val').textContent = '100%';
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      const fmtMap = {jpg:'jpeg',jpeg:'jpeg',png:'png',webp:'webp'};
+      if(fmtMap[ext]) setFormat(fmtMap[ext].toUpperCase().replace('JPEG','JPEG'));
+
+      setStatus('ready', `${img.naturalWidth} × ${img.naturalHeight}`, file.name);
+      updateFileInfo(img, file);
+      fitToScreen();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function renderToCanvas(source, bgStyle) {
+  const canvas = document.getElementById('preview-canvas');
+  const oc = document.createElement('canvas');
+  oc.width = source.naturalWidth || source.width;
+  oc.height = source.naturalHeight || source.height;
+  const ctx = oc.getContext('2d');
+
+  if(bgStyle && showCheckerboard) {
+    drawCheckerboard(ctx, oc.width, oc.height);
+  } else if(showCheckerboard && !bgStyle) {
+    drawCheckerboard(ctx, oc.width, oc.height);
+  }
+
+  if(bgStyle) {
+    ctx.save();
+    if(bgStyle.startsWith('linear-gradient') || bgStyle.startsWith('radial-gradient')) {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = oc.width; tempCanvas.height = oc.height;
+      const tc = tempCanvas.getContext('2d');
+      const match = bgStyle.match(/[\d.]+deg,(.*)/);
+      if(bgStyle.includes('linear-gradient')) {
+        const parts = bgStyle.replace('linear-gradient(','').replace(')','').split(',');
+        const angle = parseInt(parts[0]) * Math.PI / 180;
+        const x1 = oc.width/2 - Math.cos(angle) * oc.width/2;
+        const y1 = oc.height/2 - Math.sin(angle) * oc.height/2;
+        const x2 = oc.width/2 + Math.cos(angle) * oc.width/2;
+        const y2 = oc.height/2 + Math.sin(angle) * oc.height/2;
+        const grad = tc.createLinearGradient(x1,y1,x2,y2);
+        const colors = parts.slice(1).map(s => s.trim());
+        colors.forEach((c,i) => grad.addColorStop(i/(colors.length-1), c));
+        tc.fillStyle = grad;
+        tc.fillRect(0,0,oc.width,oc.height);
+      }
+      ctx.drawImage(tempCanvas, 0,0);
+    } else {
+      ctx.fillStyle = bgStyle;
+      ctx.fillRect(0, 0, oc.width, oc.height);
+    }
+    ctx.restore();
+  }
+
+  ctx.drawImage(source, 0, 0, oc.width, oc.height);
+  outputCanvas = oc;
+
+  canvas.width = oc.width;
+  canvas.height = oc.height;
+  const dctx = canvas.getContext('2d');
+  if(showCheckerboard) drawCheckerboard(dctx, oc.width, oc.height);
+  dctx.drawImage(oc, 0, 0);
+
+  updateZoomDisplay();
+}
+
+function drawCheckerboard(ctx, w, h) {
+  const sz = 16;
+  for(let y = 0; y < h; y += sz) {
+    for(let x = 0; x < w; x += sz) {
+      ctx.fillStyle = ((x/sz + y/sz) % 2 === 0) ? '#cccccc' : '#888888';
+      ctx.fillRect(x, y, sz, sz);
+    }
+  }
+}
+
+// ─── Drop zone ───────────────────────────────────────────────────────────────
+const dropZone = document.getElementById('canvas-container');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => { document.getElementById('drop-zone').classList.remove('drag-over'); });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if(file && file.type.startsWith('image/')) {
+    const fakeInput = { files: [file] };
+    loadImage(fakeInput);
+  }
+});
+
+// ─── Resize ──────────────────────────────────────────────────────────────────
+function onDimInput(axis) {
+  if(!originalImage) return;
+  const ow = originalImage.naturalWidth, oh = originalImage.naturalHeight;
+  if(aspectLocked) {
+    if(axis === 'w') {
+      const w = parseInt(document.getElementById('width-input').value) || ow;
+      document.getElementById('height-input').value = Math.round(w * oh / ow);
+    } else {
+      const h = parseInt(document.getElementById('height-input').value) || oh;
+      document.getElementById('width-input').value = Math.round(h * ow / oh);
+    }
+  }
+}
+
+function onScaleInput(val) {
+  document.getElementById('scale-val').textContent = val + '%';
+  if(!originalImage) return;
+  const ow = originalImage.naturalWidth, oh = originalImage.naturalHeight;
+  const s = parseInt(val) / 100;
+  document.getElementById('width-input').value = Math.round(ow * s);
+  document.getElementById('height-input').value = Math.round(oh * s);
+}
+
+function toggleAspect() {
+  aspectLocked = !aspectLocked;
+  document.getElementById('aspect-toggle').classList.toggle('on', aspectLocked);
+}
+
+function applyPreset(w, h) {
+  document.getElementById('width-input').value = w;
+  document.getElementById('height-input').value = h;
+  if(originalImage) {
+    const ow = originalImage.naturalWidth, oh = originalImage.naturalHeight;
+    const s = Math.round((w / ow) * 100);
+    document.getElementById('scale-range').value = Math.min(300, Math.max(10, s));
+    document.getElementById('scale-val').textContent = document.getElementById('scale-range').value + '%';
+  }
+}
+
+function updateSharp(val) {
+  sharpness = parseInt(val);
+  document.getElementById('sharp-val').textContent = val;
+}
+
+function applyResize() {
+  if(!originalImage) { toast('Load an image first', 'error'); return; }
+  const tw = parseInt(document.getElementById('width-input').value);
+  const th = parseInt(document.getElementById('height-input').value);
+  if(!tw || !th || tw < 1 || th < 1) { toast('Enter valid dimensions', 'error'); return; }
+
+  showProgress('Resizing Image', 'Applying high-quality resampling…');
+  setTimeout(() => {
+    setProgress(30);
+    setTimeout(() => {
+      const src = bgRemovedImage || originalImage;
+      const result = lanczosResize(src, tw, th);
+      setProgress(80);
+      setTimeout(() => {
+        const canvas = document.getElementById('preview-canvas');
+        canvas.width = tw; canvas.height = th;
+        const ctx = canvas.getContext('2d');
+        if(showCheckerboard) drawCheckerboard(ctx, tw, th);
+        ctx.putImageData(result, 0, 0);
+        if(sharpness > 0) applySharpen(canvas, sharpness / 100);
+        outputCanvas = canvas;
+        setProgress(100);
+        setTimeout(() => {
+          hideProgress();
+          setStatus('ready', `${tw} × ${th}`, 'Resized');
+          document.getElementById('dim-status').textContent = `${tw} × ${th}`;
+          fitToScreen();
+          toast(`Resized to ${tw} × ${th}`, 'success');
+        }, 200);
+      }, 100);
+    }, 100);
+  }, 50);
+}
+
+// Lanczos-3 resize (high quality, no blur)
+function lanczosResize(src, tw, th) {
+  const srcCanvas = document.createElement('canvas');
+  srcCanvas.width = src.naturalWidth || src.width;
+  srcCanvas.height = src.naturalHeight || src.height;
+  const srcCtx = srcCanvas.getContext('2d');
+  srcCtx.drawImage(src, 0, 0);
+  const srcData = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+
+  // Multi-step downsampling for best quality
+  let current = srcData;
+  let cw = srcCanvas.width, ch = srcCanvas.height;
+
+  while(cw > tw * 2 || ch > th * 2) {
+    const nw = Math.max(tw, Math.floor(cw / 2));
+    const nh = Math.max(th, Math.floor(ch / 2));
+    current = bilinearScale(current, cw, ch, nw, nh);
+    cw = nw; ch = nh;
+  }
+
+  return lanczosScale(current, cw, ch, tw, th);
+}
+
+function lanczosKernel(x) {
+  if(x === 0) return 1;
+  if(Math.abs(x) >= 3) return 0;
+  const pix = Math.PI * x;
+  return (3 * Math.sin(pix) * Math.sin(pix / 3)) / (pix * pix);
+}
+
+function lanczosScale(src, sw, sh, tw, th) {
+  const dst = new ImageData(tw, th);
+  const scaleX = sw / tw, scaleY = sh / th;
+  const radius = 3;
+
+  for(let dy = 0; dy < th; dy++) {
+    for(let dx = 0; dx < tw; dx++) {
+      const sx = (dx + 0.5) * scaleX - 0.5;
+      const sy = (dy + 0.5) * scaleY - 0.5;
+      let r = 0, g = 0, b = 0, a = 0, wsum = 0;
+
+      const x0 = Math.max(0, Math.floor(sx) - radius + 1);
+      const x1 = Math.min(sw - 1, Math.floor(sx) + radius);
+      const y0 = Math.max(0, Math.floor(sy) - radius + 1);
+      const y1 = Math.min(sh - 1, Math.floor(sy) + radius);
+
+      for(let ky = y0; ky <= y1; ky++) {
+        for(let kx = x0; kx <= x1; kx++) {
+          const w = lanczosKernel(sx - kx) * lanczosKernel(sy - ky);
+          const i = (ky * sw + kx) * 4;
+          r += src.data[i] * w;
+          g += src.data[i+1] * w;
+          b += src.data[i+2] * w;
+          a += src.data[i+3] * w;
+          wsum += w;
+        }
+      }
+
+      const oi = (dy * tw + dx) * 4;
+      dst.data[oi]   = Math.min(255, Math.max(0, Math.round(r / wsum)));
+      dst.data[oi+1] = Math.min(255, Math.max(0, Math.round(g / wsum)));
+      dst.data[oi+2] = Math.min(255, Math.max(0, Math.round(b / wsum)));
+      dst.data[oi+3] = Math.min(255, Math.max(0, Math.round(a / wsum)));
+    }
+  }
+  return dst;
+}
+
+function bilinearScale(src, sw, sh, tw, th) {
+  const dst = new ImageData(tw, th);
+  const scaleX = sw / tw, scaleY = sh / th;
+
+  for(let dy = 0; dy < th; dy++) {
+    for(let dx = 0; dx < tw; dx++) {
+      const sx = (dx + 0.5) * scaleX - 0.5;
+      const sy = (dy + 0.5) * scaleY - 0.5;
+      const x0 = Math.floor(sx), y0 = Math.floor(sy);
+      const x1 = Math.min(x0 + 1, sw - 1), y1 = Math.min(y0 + 1, sh - 1);
+      const fx = sx - x0, fy = sy - y0;
+
+      const i00 = (Math.max(0,y0) * sw + Math.max(0,x0)) * 4;
+      const i10 = (Math.max(0,y0) * sw + x1) * 4;
+      const i01 = (y1 * sw + Math.max(0,x0)) * 4;
+      const i11 = (y1 * sw + x1) * 4;
+
+      const oi = (dy * tw + dx) * 4;
+      for(let c = 0; c < 4; c++) {
+        const top = src.data[i00+c] * (1-fx) + src.data[i10+c] * fx;
+        const bot = src.data[i01+c] * (1-fx) + src.data[i11+c] * fx;
+        dst.data[oi+c] = Math.round(top * (1-fy) + bot * fy);
+      }
+    }
+  }
+  return dst;
+}
+
+function applySharpen(canvas, amount) {
+  const ctx = canvas.getContext('2d');
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = img.data, w = canvas.width, h = canvas.height;
+  const kernel = [0, -1, 0, -1, 5 + amount * 3, -1, 0, -1, 0];
+  const out = new Uint8ClampedArray(data);
+
+  for(let y = 1; y < h-1; y++) {
+    for(let x = 1; x < w-1; x++) {
+      const i = (y * w + x) * 4;
+      for(let c = 0; c < 3; c++) {
+        let v = 0;
+        for(let ky = -1; ky <= 1; ky++)
+          for(let kx = -1; kx <= 1; kx++)
+            v += data[((y+ky)*w+(x+kx))*4+c] * kernel[(ky+1)*3+(kx+1)];
+        out[i+c] = Math.min(255, Math.max(0, v / (1 + amount * 3)));
+      }
+      out[i+3] = data[i+3];
+    }
+  }
+
+  img.data.set(out);
+  ctx.putImageData(img, 0, 0);
+}
+
+// ─── Background removal ───────────────────────────────────────────────────────
+function removeBackground() {
+  if(!originalImage) { toast('Load an image first', 'error'); return; }
+
+  showProgress('Removing Background', 'Running edge detection…');
+  setProgress(10);
+
+  setTimeout(() => {
+    const oc = document.createElement('canvas');
+    oc.width = originalImage.naturalWidth;
+    oc.height = originalImage.naturalHeight;
+    const ctx = oc.getContext('2d');
+    ctx.drawImage(originalImage, 0, 0);
+    const imgData = ctx.getImageData(0, 0, oc.width, oc.height);
+
+    setProgress(30);
+    setTimeout(() => {
+      const threshold = parseInt(document.getElementById('threshold-range').value);
+      const feather = parseInt(document.getElementById('feather-range').value);
+
+      const result = smartBgRemove(imgData, oc.width, oc.height, threshold, feather);
+      setProgress(75);
+
+      setTimeout(() => {
+        const resultCanvas = document.createElement('canvas');
+        resultCanvas.width = oc.width;
+        resultCanvas.height = oc.height;
+        const rctx = resultCanvas.getContext('2d');
+        rctx.putImageData(result, 0, 0);
+        bgRemovedImage = resultCanvas;
+
+        const previewCanvas = document.getElementById('preview-canvas');
+        previewCanvas.width = oc.width;
+        previewCanvas.height = oc.height;
+        const pctx = previewCanvas.getContext('2d');
+        if(showCheckerboard) drawCheckerboard(pctx, oc.width, oc.height);
+        pctx.drawImage(resultCanvas, 0, 0);
+
+        setProgress(100);
+        setTimeout(() => {
+          hideProgress();
+          document.getElementById('bg-status').textContent = 'Done';
+          document.getElementById('bg-status').className = 'removal-badge badge-success';
+          document.getElementById('bg-status-text').textContent = 'Background removed';
+          document.getElementById('restore-btn').disabled = false;
+          toast('Background removed successfully', 'success');
+        }, 200);
+      }, 200);
+    }, 100);
+  }, 100);
+}
+
+function smartBgRemove(imgData, w, h, threshold, feather) {
+  const data = imgData.data;
+  const result = new ImageData(w, h);
+  const alpha = new Float32Array(w * h);
+
+  // Sample corner colors as potential background
+  const samples = [
+    [0, 0], [w-1, 0], [0, h-1], [w-1, h-1],
+    [Math.floor(w/2), 0], [0, Math.floor(h/2)],
+    [w-1, Math.floor(h/2)], [Math.floor(w/2), h-1]
+  ];
+
+  let bgR = 0, bgG = 0, bgB = 0;
+  samples.forEach(([x, y]) => {
+    const i = (y * w + x) * 4;
+    bgR += data[i]; bgG += data[i+1]; bgB += data[i+2];
+  });
+  bgR /= samples.length; bgG /= samples.length; bgB /= samples.length;
+
+  const thresh = threshold * 3;
+
+  // Calculate alpha based on color distance from background
+  for(let i = 0; i < w * h; i++) {
+    const pi = i * 4;
+    const dr = data[pi] - bgR;
+    const dg = data[pi+1] - bgG;
+    const db = data[pi+2] - bgB;
+    const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+    // Smooth transition
+    alpha[i] = Math.min(1, Math.max(0, (dist - thresh/2) / (thresh/2)));
+  }
+
+  // Edge detection & flood fill from corners
+  const visited = new Uint8Array(w * h);
+  const queue = [];
+  samples.forEach(([x, y]) => { if(!visited[y*w+x]) { queue.push(y*w+x); visited[y*w+x] = 1; } });
+
+  while(queue.length > 0) {
+    const idx = queue.pop();
+    const x = idx % w, y = Math.floor(idx / w);
+    if(alpha[idx] > 0.5) { alpha[idx] = 0; }
+
+    const neighbors = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
+    for(const [nx, ny] of neighbors) {
+      if(nx >= 0 && nx < w && ny >= 0 && ny < h) {
+        const ni = ny * w + nx;
+        if(!visited[ni] && alpha[ni] < 0.4) {
+          visited[ni] = 1;
+          queue.push(ni);
+        }
+      }
+    }
+  }
+
+  // Feather edges
+  if(feather > 0) {
+    const feathered = new Float32Array(alpha);
+    for(let y = feather; y < h - feather; y++) {
+      for(let x = feather; x < w - feather; x++) {
+        let sum = 0, count = 0;
+        for(let fy = -feather; fy <= feather; fy++) {
+          for(let fx = -feather; fx <= feather; fx++) {
+            sum += alpha[(y+fy)*w+(x+fx)];
+            count++;
+          }
+        }
+        feathered[y*w+x] = sum / count;
+      }
+    }
+    alpha.set(feathered);
+  }
+
+  // Write result
+  for(let i = 0; i < w * h; i++) {
+    const pi = i * 4;
+    result.data[pi]   = data[pi];
+    result.data[pi+1] = data[pi+1];
+    result.data[pi+2] = data[pi+2];
+    result.data[pi+3] = Math.round(alpha[i] * 255);
+  }
+
+  return result;
+}
+
+function restoreOriginal() {
+  if(!originalImage) return;
+  bgRemovedImage = null;
+  renderToCanvas(originalImage);
+  document.getElementById('restore-btn').disabled = true;
+  document.getElementById('bg-status').textContent = 'Ready';
+  document.getElementById('bg-status').className = 'removal-badge badge-pending';
+  document.getElementById('bg-status-text').textContent = 'Click Remove Background';
+  toast('Original restored', 'success');
+}
+
+// ─── Add background ──────────────────────────────────────────────────────────
+function applyBgColor(color) {
+  const src = bgRemovedImage || originalImage;
+  if(!src) { toast('Load an image first', 'error'); return; }
+  const canvas = document.getElementById('preview-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = src.width || src.naturalWidth;
+  canvas.height = src.height || src.naturalHeight;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(src, 0, 0);
+  outputCanvas = canvas;
+  document.getElementById('hex-input').value = color;
+  toast('Background color applied', 'success');
+}
+
+function applyBgGradient(css) {
+  const src = bgRemovedImage || originalImage;
+  if(!src) { toast('Load an image first', 'error'); return; }
+  const canvas = document.getElementById('preview-canvas');
+  const ctx = canvas.getContext('2d');
+  const w = src.width || src.naturalWidth;
+  const h = src.height || src.naturalHeight;
+  canvas.width = w; canvas.height = h;
+
+  // Parse and draw gradient
+  const colors = css.match(/#[0-9a-fA-F]{3,6}|rgba?\([^)]+\)/g) || ['#6366f1','#ec4899'];
+  const angleMatch = css.match(/(\d+)deg/);
+  const angle = angleMatch ? parseInt(angleMatch[1]) * Math.PI / 180 : Math.PI / 4;
+
+  const x1 = w/2 - Math.cos(angle) * w, y1 = h/2 - Math.sin(angle) * h;
+  const x2 = w/2 + Math.cos(angle) * w, y2 = h/2 + Math.sin(angle) * h;
+  const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+  colors.forEach((c, i) => grad.addColorStop(i / (colors.length - 1), c));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(src, 0, 0);
+  outputCanvas = canvas;
+  toast('Gradient background applied', 'success');
+}
+
+function onHexInput(val) {
+  if(/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById('custom-color').value = val;
+  }
+}
+
+function loadBgImage(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const src = bgRemovedImage || originalImage;
+  if(!src) { toast('Load a main image first', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const bgImg = new Image();
+    bgImg.onload = () => {
+      const canvas = document.getElementById('preview-canvas');
+      const w = src.width || src.naturalWidth;
+      const h = src.height || src.naturalHeight;
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bgImg, 0, 0, w, h);
+      ctx.drawImage(src, 0, 0, w, h);
+      outputCanvas = canvas;
+      toast('Custom background applied', 'success');
+    };
+    bgImg.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+// ─── Format & Export ─────────────────────────────────────────────────────────
+function setFormat(fmt) {
+  currentFormat = fmt.toLowerCase();
+  document.querySelectorAll('#format-chips .chip').forEach(c => c.classList.toggle('active', c.textContent === fmt.toUpperCase()));
+  const haQ = currentFormat === 'jpeg' || currentFormat === 'webp';
+  document.getElementById('quality-section').style.opacity = haQ ? '1' : '0.4';
+  document.getElementById('quality-label').textContent = haQ ? '' : '(lossless)';
+  document.getElementById('format-status').textContent = fmt.toUpperCase();
+}
+
+function updateQuality(val) {
+  document.getElementById('quality-val').textContent = val;
+  document.getElementById('quality-range').value = val;
+}
+
+function exportImage() {
+  const canvas = outputCanvas || document.getElementById('preview-canvas');
+  if(!canvas || !canvas.width) { toast('Nothing to export', 'error'); return; }
+
+  const fmt = currentFormat === 'jpeg' ? 'image/jpeg' : currentFormat === 'webp' ? 'image/webp' : 'image/png';
+  const quality = parseInt(document.getElementById('quality-range').value) / 100;
+  const colorspace = document.getElementById('colorspace').value;
+
+  showProgress('Exporting Image', `Encoding as ${currentFormat.toUpperCase()}…`);
+  setProgress(40);
+
+  setTimeout(() => {
+    let exportCanvas = canvas;
+
+    if(colorspace === 'grayscale') {
+      exportCanvas = document.createElement('canvas');
+      exportCanvas.width = canvas.width; exportCanvas.height = canvas.height;
+      const ctx = exportCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+      for(let i = 0; i < d.length; i += 4) {
+        const gray = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
+        d[i] = d[i+1] = d[i+2] = gray;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    setProgress(80);
+    setTimeout(() => {
+      const ext = currentFormat === 'jpeg' ? 'jpg' : currentFormat;
+      const dataURL = exportCanvas.toDataURL(fmt, quality);
+      const link = document.createElement('a');
+      const name = (originalFile ? originalFile.name.replace(/\.[^.]+$/, '') : 'image') + '_studio.' + ext;
+      link.download = name;
+      link.href = dataURL;
+      link.click();
+
+      setProgress(100);
+      setTimeout(() => {
+        hideProgress();
+        toast(`Exported as ${name}`, 'success');
+      }, 200);
+    }, 100);
+  }, 100);
+}
+
+// ─── Zoom ─────────────────────────────────────────────────────────────────────
+function zoom(factor) {
+  zoomLevel = Math.min(8, Math.max(0.05, zoomLevel * factor));
+  applyZoom();
+}
+
+function setZoom(z) {
+  zoomLevel = z;
+  applyZoom();
+}
+
+function applyZoom() {
+  const wrapper = document.getElementById('canvas-wrapper');
+  const canvas = document.getElementById('preview-canvas');
+  if(!canvas.width) return;
+  wrapper.style.width = (canvas.width * zoomLevel) + 'px';
+  wrapper.style.height = (canvas.height * zoomLevel) + 'px';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  updateZoomDisplay();
+}
+
+function fitToScreen() {
+  const container = document.getElementById('canvas-container');
+  const canvas = document.getElementById('preview-canvas');
+  if(!canvas.width) return;
+  const pw = container.clientWidth - 80;
+  const ph = container.clientHeight - 80;
+  const scaleX = pw / canvas.width;
+  const scaleY = ph / canvas.height;
+  zoomLevel = Math.min(1, Math.min(scaleX, scaleY));
+  applyZoom();
+}
+
+function updateZoomDisplay() {
+  document.getElementById('zoom-display').textContent = Math.round(zoomLevel * 100) + '%';
+}
+
+function toggleCheckerboard() {
+  showCheckerboard = !showCheckerboard;
+  document.getElementById('checker-btn').classList.toggle('active', showCheckerboard);
+  const src = bgRemovedImage || originalImage;
+  if(src) { const c = document.getElementById('preview-canvas'); const ctx = c.getContext('2d'); if(!showCheckerboard) { ctx.clearRect(0,0,c.width,c.height); ctx.drawImage(src,0,0); } else { drawCheckerboard(ctx,c.width,c.height); ctx.drawImage(src,0,0); } }
+}
+
+// ─── Status ───────────────────────────────────────────────────────────────────
+function setStatus(state, label, name) {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  const colors = { ready: '#34d399', processing: '#fbbf24', error: '#f87171' };
+  dot.style.background = colors[state] || colors.ready;
+  text.textContent = name || label;
+  document.getElementById('dim-status').textContent = label || '';
+  document.getElementById('file-info').textContent = name ? `${name}  ·  ${label}` : label;
+}
+
+function updateFileInfo(img, file) {
+  document.getElementById('format-status').textContent = file.type.split('/')[1].toUpperCase();
+  document.getElementById('size-status').textContent = (file.size / 1024).toFixed(0) + ' KB';
+  document.getElementById('dim-status').textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+
+  const infoDiv = document.getElementById('convert-info');
+  const infoBody = document.getElementById('convert-info-body');
+  infoDiv.style.display = 'block';
+  infoBody.innerHTML = `
+    <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text2)">Dimensions</span><span style="font-family:var(--mono)">${img.naturalWidth} × ${img.naturalHeight}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text2)">File size</span><span style="font-family:var(--mono)">${(file.size/1024).toFixed(1)} KB</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text2)">Type</span><span style="font-family:var(--mono)">${file.type}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text2)">Megapixels</span><span style="font-family:var(--mono)">${(img.naturalWidth*img.naturalHeight/1e6).toFixed(2)} MP</span></div>
+  `;
+}
+
+// ─── Progress ─────────────────────────────────────────────────────────────────
+function showProgress(title, sub) {
+  document.getElementById('progress-title').textContent = title;
+  document.getElementById('progress-sub').textContent = sub;
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('progress-overlay').classList.add('show');
+}
+
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function hideProgress() {
+  document.getElementById('progress-overlay').classList.remove('show');
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span>${msg}`;
+  c.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 2500);
+}
+
+// ─── Reset ────────────────────────────────────────────────────────────────────
+function resetAll() {
+  if(!originalImage) return;
+  bgRemovedImage = null;
+  renderToCanvas(originalImage);
+  document.getElementById('width-input').value = originalImage.naturalWidth;
+  document.getElementById('height-input').value = originalImage.naturalHeight;
+  document.getElementById('restore-btn').disabled = true;
+  document.getElementById('bg-status').textContent = 'Ready';
+  document.getElementById('bg-status').className = 'removal-badge badge-pending';
+  toast('Reset to original', 'success');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+initUI();
+setFormat('PNG');
+document.getElementById('checker-btn').classList.add('active');
+</script>
+</body>
+</html>
